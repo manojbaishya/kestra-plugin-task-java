@@ -1,0 +1,19 @@
+id: java_etl
+namespace: io.kestra.java
+
+tasks:
+  - id: extract
+    type: io.kestra.plugin.core.debug.Return
+    format: |
+      [
+        {"name": " alice ", "email": " alice@example.com ", "age": 37},
+        {"name": "bob ", "email": " bob@example.com "}
+      ]
+  - id: transform
+    type: io.kestra.plugin.java.Transform
+    records: "{{ outputs.extract.value }}"
+    uppercaseFields:
+      - name
+  - id: load
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ outputs.transform.records | json }}"

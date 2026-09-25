@@ -1,10 +1,10 @@
 {
-  "name": "plugin-template",
+  "name": "kestra-plugin-task-java",
   "build": {
     "context": ".",
     "dockerfile": "Dockerfile"
   },
-  "workspaceFolder": "/workspaces/plugin-template",
+  "workspaceFolder": "/workspaces/kestra-plugin-task-java",
   "forwardPorts": [8080],
   "customizations": {
     "vscode": {
