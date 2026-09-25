@@ -1,0 +1,28 @@
+id: java_bridge
+namespace: io.kestra.java
+
+variables:
+  contextSecret: top-secret
+
+tasks:
+  - id: commands
+    type: io.kestra.plugin.java.Commands
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    secrets:
+      token: top-secret
+    inputFiles:
+      BridgeMain.java: |
+        import io.kestra.plugin.java.bridge.KestraBridge;
+        import java.util.Map;
+
+        public class BridgeMain {
+            public static void main(String[] args) throws Exception {
+                Object contextSecret = ((Map<?, ?>) KestraBridge.context().get("vars")).get("contextSecret");
+                KestraBridge.output("contextSecret", contextSecret);
+                KestraBridge.output("secretPresent", KestraBridge.secret("token").isPresent());
+            }
+        }
+    commands:
+      - javac -cp "$KESTRA_BRIDGE_CLASSPATH" BridgeMain.java
+      - java -cp ".:$KESTRA_BRIDGE_CLASSPATH" BridgeMain

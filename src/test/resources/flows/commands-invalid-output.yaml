@@ -1,0 +1,10 @@
+id: java_commands_invalid_output
+namespace: io.kestra.java
+
+tasks:
+  - id: commands
+    type: io.kestra.plugin.java.Commands
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    commands:
+      - printf '%s' 'not-json' > "$KESTRA_OUTPUT_FILE"

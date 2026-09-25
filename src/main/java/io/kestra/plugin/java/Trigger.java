@@ -1,4 +1,4 @@
-package io.kestra.plugin.templates;
+package io.kestra.plugin.java;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -36,7 +36,7 @@ import java.util.Optional;
 
                 triggers:
                   - id: random
-                    type: io.kestra.plugin.templates.Trigger
+                    type: io.kestra.plugin.java.Trigger
                     min: 0.5
                 """
         )

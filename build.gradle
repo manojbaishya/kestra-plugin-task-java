@@ -13,15 +13,22 @@ plugins {
 
 def isBuildSnapshot = version.toString().endsWith("-SNAPSHOT")
 
+configurations {
+    bridgeRuntime {
+        canBeConsumed = false
+        canBeResolved = true
+    }
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
     if (isBuildSnapshot) {
-        maven { url "https://central.sonatype.com/repository/maven-snapshots/" }
+        maven { url = "https://central.sonatype.com/repository/maven-snapshots/" }
     }
 }
 
-final targetJavaVersion = JavaVersion.VERSION_21
+final targetJavaVersion = JavaVersion.VERSION_25
 
 java {
     sourceCompatibility = targetJavaVersion
@@ -29,7 +36,7 @@ java {
 }
 
 group = "io.kestra.plugin"
-description = 'Plugin template for Kestra'
+description = 'Java and JBang execution tasks for Kestra workflows'
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
@@ -46,9 +53,35 @@ dependencies {
     compileOnly "org.projectlombok:lombok"
 
     // kestra
-    annotationProcessor group: "io.kestra", name: "processor", version: kestraVersion
-    compileOnly group: "io.kestra", name: "core", version: kestraVersion
-    compileOnly group: "io.kestra", name: "script", version: kestraVersion
+    annotationProcessor "io.kestra:processor:$kestraVersion"
+    compileOnly "io.kestra:core:$kestraVersion"
+    compileOnly "io.kestra:script:$kestraVersion"
+    compileOnly "com.fasterxml.jackson.core:jackson-databind"
+
+    bridgeRuntime enforcedPlatform("io.kestra:platform:$kestraVersion")
+    bridgeRuntime "com.fasterxml.jackson.core:jackson-databind"
+}
+
+def bridgeJar = tasks.register("bridgeJar", Jar) {
+    dependsOn(tasks.named("compileJava"))
+    archiveBaseName.set("kestra-java-bridge")
+    archiveClassifier.set("bridge")
+    destinationDirectory.set(layout.buildDirectory.dir("bridge"))
+    from(layout.buildDirectory.dir("classes/java/main")) {
+        include "io/kestra/plugin/java/bridge/**"
+    }
+    from({ configurations.bridgeRuntime.collect { dependency ->
+        dependency.isDirectory() ? dependency : zipTree(dependency)
+    } })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA"
+}
+
+tasks.named("processResources", ProcessResources) {
+    dependsOn(bridgeJar)
+    from(bridgeJar.flatMap { it.archiveFile }) {
+        rename { "kestra-java-bridge.jar" }
+    }
 }
 
 
@@ -75,13 +108,13 @@ dependencies {
     testImplementation "io.micronaut:micronaut-jackson-databind"
 
     // test deps needed only for to have a runner
-    testAnnotationProcessor group: "io.kestra", name: "processor", version: kestraVersion
-    testImplementation group: "io.kestra", name: "core", version: kestraVersion
-    testImplementation group: "io.kestra", name: "tests", version: kestraVersion
-    testImplementation group: "io.kestra", name: "script", version: kestraVersion
-    testImplementation group: "io.kestra", name: "repository-memory", version: kestraVersion
-    testImplementation group: "io.kestra", name: "runner-memory", version: kestraVersion
-    testImplementation group: "io.kestra", name: "storage-local", version: kestraVersion
+    testAnnotationProcessor "io.kestra:processor:$kestraVersion"
+    testImplementation "io.kestra:core:$kestraVersion"
+    testImplementation "io.kestra:tests:$kestraVersion"
+    testImplementation "io.kestra:script:$kestraVersion"
+    testImplementation "io.kestra:repository-memory:$kestraVersion"
+    testImplementation "io.kestra:runner-memory:$kestraVersion"
+    testImplementation "io.kestra:storage-local:$kestraVersion"
 
     // test
     testImplementation "org.junit.jupiter:junit-jupiter-engine"
@@ -106,6 +139,7 @@ test {
 
 jacocoTestReport {
     dependsOn test
+    classDirectories.setFrom(sourceSets.main.output.classesDirs)
     reports {
         xml.required.set(true)
     }
@@ -121,11 +155,11 @@ mavenPublishing {
     pom {
         name = "${project.name}"
         description = "${project.group}:${project.name}:${project.version}"
-        url = "https://github.com/kestra-io/${project.name}"
+        url = "https://github.com/manojbaishya/kestra-plugin-task-java"
         licenses {
             license {
                 name = 'The Apache License, Version 2.0'
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
             }
         }
         developers {
@@ -137,7 +171,7 @@ mavenPublishing {
         }
         scm {
             connection = 'scm:git:'
-            url = "https://github.com/kestra-io/${project.name}"
+            url = "https://github.com/manojbaishya/kestra-plugin-task-java"
         }
     }
 }
@@ -148,11 +182,12 @@ tasks.withType(GenerateModuleMetadata).configureEach {
 }
 
 jar {
+    exclude "io/kestra/plugin/java/bridge/**"
     manifest {
         attributes(
             "X-Kestra-Name": project.name,
-            "X-Kestra-Title": "Template",
-            "X-Kestra-Group": project.group + ".templates",
+            "X-Kestra-Title": "Java",
+            "X-Kestra-Group": project.group + ".java",
             "X-Kestra-Description": project.description,
             "X-Kestra-Version": project.version
         )
@@ -161,6 +196,7 @@ jar {
 
 shadowJar {
     archiveClassifier.set(null)
+    exclude "io/kestra/plugin/java/bridge/**"
     mergeServiceFiles()
 }
 

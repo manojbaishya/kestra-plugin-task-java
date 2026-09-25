@@ -1,0 +1,11 @@
+id: java_commands_failure
+namespace: io.kestra.java
+
+tasks:
+  - id: commands
+    type: io.kestra.plugin.java.Commands
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    commands:
+      - printf '%s' '{"outputs":{"failureValue":7}}' > "$KESTRA_OUTPUT_FILE"
+      - exit 7

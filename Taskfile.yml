@@ -1,0 +1,45 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  clean:
+    desc: Clean Gradle outputs
+    cmds:
+      - ./gradlew clean
+
+  test:
+    desc: Run the JUnit 5 and Kestra test suite
+    cmds:
+      - ./gradlew test
+
+  build:
+    desc: Build the Kestra plugin jar in build/libs
+    deps: [clean]
+    cmds:
+      - ./gradlew shadowJar
+
+  up:
+    desc: Start the local Kestra container
+    cmds:
+      - docker compose up --build
+
+  run-local:
+    desc: Build the jar and run Kestra locally
+    deps: [build]
+    cmds:
+      - docker compose up
+
+  down:
+    desc: Stop the local Kestra container
+    cmds:
+      - docker compose down
+
+  logs:
+    desc: Follow the local Kestra logs
+    cmds:
+      - docker compose logs -f app
+

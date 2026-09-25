@@ -1,0 +1,24 @@
+FROM eclipse-temurin:25-jdk
+
+ARG JBANG_VERSION=0.141.0
+ARG JBANG_SHA256=9e6e1101b70ab6cd1defff5af0bfb28b16a0fed75a212661c6e95e6cab5fb2bb
+
+ENV HOME=/home/kestra \
+    JBANG_DIR=/opt/jbang \
+    JBANG_CACHE_DIR=/opt/jbang-cache \
+    PATH=/opt/jbang/bin:$PATH
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y ca-certificates curl \
+    && curl -fsSL "https://github.com/jbangdev/jbang/releases/download/v${JBANG_VERSION}/jbang-${JBANG_VERSION}-linux-x64.tar" -o /tmp/jbang.tar \
+    && printf '%s  %s\n' "${JBANG_SHA256}" /tmp/jbang.tar | sha256sum -c - \
+    && mkdir -p /opt/jbang /opt/jbang-cache /workspace \
+    && tar -xf /tmp/jbang.tar --strip-components=1 -C /opt/jbang \
+    && chmod 755 /opt/jbang/bin/jbang \
+    && groupadd --gid 10001 kestra \
+    && useradd --uid 10001 --gid 10001 --home-dir /home/kestra --create-home --shell /usr/sbin/nologin kestra \
+    && chown -R kestra:kestra /home/kestra /opt/jbang-cache /workspace \
+    && rm -rf /var/lib/apt/lists/* /tmp/jbang.tar
+
+USER 10001:10001
+WORKDIR /workspace

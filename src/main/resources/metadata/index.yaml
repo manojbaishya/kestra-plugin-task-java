@@ -1,7 +1,7 @@
-group: io.kestra.plugin.templates
-name: "template"
-title: "Template"
-description: "Plugin template for Kestra"
+group: io.kestra.plugin.java
+name: "java"
+title: "Java"
+description: "Java and JBang execution, secure runtime bridge, and record transformation tasks for Kestra workflows"
 body: ""
 videos: []
 createdBy: "Kestra Core Team"
